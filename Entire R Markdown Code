@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = FALSE, fig.width = 10, fig.height = 6, out.width = 
 
 ## Introduction
 
-Stream Inspection Log (SIL) data have been consistently collected VIA aerial and snorkel surveys across the Nanika river for many decades, with current years of interest ranging from 2004 until present (2024). Although these data have been reviewed for quality assurance, many inconsistencies remain, making the creation of an accurate escapement time series challenging. This document outlines potential strategies for data manipulation in excel and R Studio to help alleviate these concerns in the Nanika River system. These strategies could be expanded upon to visualize escapement time series’ across other rivers in the Upper Skeena watershed (e.g. Babine, Morice), given that differences in morphology and fish distribution are appropriately considered.
+Stream Inspection Log (SIL) data have been consistently collected VIA aerial and snorkel surveys across the Nanika River for many decades, with current years of interest ranging from 2004 to present (2024). Although these data have been reviewed for quality assurance, many inconsistencies remain, making the creation of an accurate escapement time series challenging. This document outlines potential strategies for data manipulation in excel and R Studio to help alleviate these concerns in the Nanika River system. These strategies could be expanded upon to visualize escapement time series’ across other rivers in the Upper Skeena watershed (e.g. Babine, Morice), given that differences in morphology and fish distribution are appropriately considered.
 
 
 ## Goal:
@@ -19,24 +19,23 @@ To generate and plot a representative time series of AUC escapement for spawning
 
 ## Concerns
 ### Inconsistent Fish Distribution
-The Nanika River is unique in terms of fish distribution, as preferred Sockeye spawning habitat is not equally distributed. The vast majority of observed Sockeye spawning habitat consists of 3 main spawning lagoons, which are located in the upper portion of the Nanika River, from Nanika falls downstream approximately 4 kilometers. SIL data illustrate that the majority of spawning Sockeye have been observed in this upper section consistently from 2004 – 2024. 
+The Nanika River is unique in terms of fish distribution, as preferred Sockeye spawning habitat is not equally distributed. The vast majority of observed Sockeye spawning habitat consists of 3 main spawning lagoons located in the upper portion of the Nanika River, from Nanika Falls downstream approximately 4 kilometers. SIL data illustrate that the majority of spawning Sockeye have been observed in this upper section consistently from 2004 – 2024. 
 
 ### Inconsistent Survey Extent
-Although there has been consistent temporal cover of the Nanika River VIA aerial and snorkel surveys, the extent of these surveys has varied significantly, both within and across survey years. Given the uneven distribution of spawners which heavily favours the upper portion of the river, many aerial surveys forego the less populated lower sections to conserve time and money on flights. To quantify this, STAD staff have suggested the addition of new fields in the SIL data entry sheets which provide the proportion of the total survey distance covered by each individual survey. However, this proportion only provides us with the proportion of the total length of the Nanika river which was surveyed, as this information cannot be applied to observed fish counts given the uneven distribution of spawning Sockeye in this system. 
+Although surveys exhibit consistent temporal cover of the Nanika River VIA aerial and snorkel surveys, the extent of these surveys has varied significantly, both within and across survey years. Given the uneven distribution of spawners which heavily favours the upper portion of the river, many aerial surveys forego the less populated lower portion to conserve time and money on flights. To quantify this, STAD staff have suggested the addition of a new field in SIL data entry sheets, providing the proportion of the total survey distance covered by each individual survey. However, this new field only provides us with the proportion of the total length of the Nanika River surveyed and cannot be applied to observed fish counts given the uneven distribution of spawning Sockeye in this system. 
 
 ### Selecting Appropriate Residence Time
-This winter, STAD staff examined Nanika SIL data from previous years to back-calculate the residence time used in AUC escapement calculations. However, rationale behind the selection of these residence times is not recorded, and residence times vary across years. 
+This winter, STAD staff examined Nanika SIL data from previous years to back-calculate the residence time used in AUC escapement calculations. However, rationale behind the selection of these residence times was most often not recorded, and residence times vary across years. 
 
 ### Lack of Distinction between Spawners and Holders
-Extracting additional information regarding fish distribution, observer efficiency, and other relevant information was a major component of the winter review and QA of SIL data. However, with the exception of 2024, many years contain few or no surveys which accurately distinguish between holding and spawning Sockeye. Instead, most surveys list all observed Sockeye as either holding or spawning, assumingly dependent on the time of year and the behaviour/distribution of the majority of sockeye observed.
+Extracting additional information regarding fish distribution, observer efficiency, and other relevant information was a major component of the winter review and QA of SIL data. However, with the exception of 2024, many years contain few or no surveys which accurately distinguish between holding and spawning Sockeye. Instead, most surveys list all observed Sockeye as either holding or spawning, which is assumed to be dependent on the time of year and the behaviour/distribution of the majority of Sockeye observed.
  
 ## Possible Solutions
 
 
-## 1. Full Survey Extent Method: Include only surveys which cover the entire survey extent 
+### 1. Full Survey Extent Method
+#### Include only surveys which cover the entire survey extent 
 Required data fields (per survey):
-
-Existing Fields: 
 
 + Sock_AL_Spawning
 + StreamId
@@ -60,14 +59,14 @@ knitr::include_graphics("C:/Users/hugdahlr/Documents/Nanika SK Review/Nanika_Sur
 ```
 
 ##### <u>Creating new data fields</u>
-Using information present in SIL data, particularly within the various comment and rationale fields recorded by the surveyor, new fields must be created to inform the AUC function. 
+Using information from SIL data, particularly within the various surveyor comment and rationale fields, new fields must be created to inform the AUC function. 
 
 + proportion.surveyed 
-  + Depending on fish distribution and survey extent of the river in question, defining separate reaches may be appropriate (as is the case for Nanika). Create proportion.surveyed field informed by SectionInspected field, where surveys which cover the entire extent = 1, and surveys which cover only partial extent = 0.2 (or a value representative of the reach in question)
+  + Depending on fish distribution and survey extent of the river in question, defining separate reaches may be appropriate (as is the case for the Nanika River). Create proportion.surveyed field informed by existing SectionInspected field comments, where surveys which cover the entire extent = 1, and surveys which cover only partial extent = 0.2 (or a value representative of the reach in question)
 + obs.eff
-  + Use surveyor comments (generally found in RationaleForEstLive field) to fill observer efficiency as proportions
+  + Use surveyor comments (generally found in RationaleForEstLive field) to fill with observer efficiency proportions
   + Replace NA values with average obs.eff, or appropriate obs.eff value of choice (e.g. 0.7)
-    + Note: create a new column, then replace NA values for easy adjustment of chosen replacement obs.eff value
+    + **Note:** create a duplicate obs.eff column, then replace NA values for easy adjustment of chosen replacement obs.eff value
 + julian.day
   + Use a Julian day calculator to fill the appropriate values for each survey
 + fullextent_sk_spawners
@@ -76,7 +75,7 @@ Using information present in SIL data, particularly within the various comment a
   + Fill by dividing (fullextent_sk_spawners / obs.eff)
 
 ##### <u>Define residence time</u>
-Winter data review found that residence time used in AUC escapement calculations (2004-2024) ranged from 10 - 21 days. However, of these estimates, only 2 years used only spawning Sockeye to select residence time.
+Winter data review found that residence time used in AUC escapement calculations (2004-2024) ranged from 10 - 21 days. However, of these estimates, only 2 years differentiated between holders and spawners, using only spawning Sockeye to select residence time.
 
 The average of these residence times (2009 = 13.5 days, 2022 = 15 days) was chosen for this context at 14.25 days.
 
@@ -89,10 +88,10 @@ For the purpose of time series visualization, a constant residence time will be 
 + test.auc.allinone function is run once for each relevant survey year
   + Where day = julian.day, count = fullextent_sk_spawners_est_total, residence time = 14.25
 + **Optional:** Survey years with fewer than 2 relevant surveys are removed (e.g. 2017, 2008(?))
-+ AUC values are extracted from resulting dataframes, the converted to a new dataframe (auc_values_1)
++ AUC values are extracted from resulting dataframes, then converted to a new dataframe (auc_values_1)
 + auc_values_1 is centralized and standardized to visualize time series
 + Resulting escapement time series is plotted 
-  +**Optional**: smoothed trend line is added for visualization
+  + **Optional**: smoothed trend line is added for visualization
 
 ```{r fig.cap = "Figure 2: Nanika River Escapement Time Series, Full Survey Extent Method (2004-2024)", echo=FALSE, eval=TRUE, message=FALSE, warning=FALSE}
 
@@ -230,7 +229,7 @@ kable(survey_counts.1.complete, col.names = c("Year", "Number of Surveys"), capt
 ```
 
 #### Results 
-This strategy selects only surveys which cover the entire survey extent to generate a time series of Nanika River Sockeye escapement from 2004-2024. 
+This method selects only surveys which cover the entire survey extent to generate a time series of Nanika River Sockeye escapement from 2004-2024. 
 
 The total number of useable surveys in this method is **`r total_surveys.1`**
 
@@ -238,11 +237,12 @@ The total number of useable surveys in this method is **`r total_surveys.1`**
 #### Limitations
 
 + Selecting only surveys which cover the entire survey extent effectively shrinks the sample size of usable survey data 
-+ Residence time selection, although constant throughout AUC calculations, remains subjective. Selecting alternative residence times significantly alters escapement.
++ Residence time selection, although constant throughout AUC calculations, remains subjective. Selecting alternative residence times can significantly alter escapement.
 
 
 
-## 2. LCD Method: Calculate escapement using the most consistent proportion surveyed to correct for inconsistent survey extent/fish distribution 
+### 2. LCD Method
+#### Calculate escapement using the most consistent proportion surveyed to correct for inconsistent survey extent/fish distribution 
 Required Data Fields (per survey): 
 
 + Sock_AL_Spawning
@@ -272,7 +272,7 @@ Using information present in SIL data, particularly within the various comment a
   + Use a Julian day calculator to fill the appropriate values for each survey
 + reach2_sk_spawners
   + For surveys which cover the entire survey extent (proportion.surveyed = 1), fill the reach2_sk_spawners column only when reach-specific spawner information can be found within   surveyor comments in the FishDistribution field
-  + For surveys which only cover reach 2 (the proportion in question), fill using values from the Sock_AL_Spawning field.
+  + For surveys which only cover reach 2 (proportion.surveyed = 0.2), fill using values from the Sock_AL_Spawning field.
 + reach2_sk_spawners_est_total
   + Fill by dividing (reach2_sk_spawners / obs.eff)
 
@@ -283,7 +283,7 @@ The average of these residence times (2009 = 13.5 days, 2022 = 15 days) was chos
 
 For the purpose of time series visualization, a constant residence time will be used.
 
-##### Define and run AUC escapement function (test.auc.allinone) using created fields
+##### <u>Define and run AUC escapement function (test.auc.allinone) using created fields</u>
 
 + test.auc.allinone function is defined to calculate AUC escapement from relevant raw data fields 
 + Raw data are imported 
@@ -293,7 +293,7 @@ For the purpose of time series visualization, a constant residence time will be 
 + AUC values are extracted from resulting dataframes, the converted to a new dataframe (auc_values_0.2)
 + auc_values_0.2 is centralized and standardized to visualize time series
 + Resulting escapement time series is plotted 
-  +**Optional**: smoothed trend line is added for visualization
+  + **Optional**: smoothed trend line is added for visualization
 
 
 ```{r fig.cap = " Figure 3: Nanika River Escapement Time Series, LCD Method (2004-2024)", echo=FALSE, eval=TRUE, message=FALSE, warning=FALSE}
@@ -398,30 +398,31 @@ kable(survey_counts.0.2.complete, col.names = c("Year", "Number of Surveys"), ca
 ```
 
 #### Results 
-This strategy utilizes surveyor comments to delineate the Nanika River into 2 distinct reaches, where spawning Sockeye are observed and recorded. In theory, when surveys cover only a proportion of a river due to uneven fish distribution, this method will maximize the number of usable surveys.
+This strategy utilizes surveyor comments to delineate the Nanika River into 2 distinct reaches, where spawning Sockeye are observed and recorded. In theory, when surveys cover only a proportion of a river due to uneven fish distribution, this method will maximize the number of usable surveys in AUC estimation.
 
 The total number of usable surveys for this method is **`r total_surveys.0.2`**
 
-These reach-specific count data are used to generate a time series of Nanika River Sockeye escapement in *Reach 2* (Red Slide Creek to Nanika Falls) from 2004-2024.
+These reach-specific count data are used to generate a time series of Nanika River Sockeye escapement in **Reach 2** (Red Slide Creek to Nanika Falls) from 2004-2024.
 
 #### Limitations 
 
-+ Resulting escapement is only representative of Reach 2 of the Nanika River, so displays an escapement *trend* rather than accurate yearly estimates for the system.
-+ Splitting the Nanika River into reaches years after data have been collected effectively shrinks the usable survey data.
++ Resulting escapement is only representative of Reach 2 of the Nanika River, and displays an escapement **trend** rather than accurate yearly estimates for the system.
++ Splitting the Nanika River into reaches years after data have been collected effectively shrinks usable survey data.
   + Due to inconsistencies in data collection and information recorded by surveyors, many surveys which cover the entire survey extent do not contain adequate information to split spawning Sockeye observations by reach. This significantly decreases the usable number of surveys within this method.
-+ Selection of residence time remains subjective. Selecting alternative residence times significantly alters escapement.
++ Selection of residence time remains subjective. Selecting alternative residence times can significantly alter escapement.
 
 
 ### Comparison 
 
 #### Number of usable surveys
 
-+ The LCD Method should, in theory, maximize the number of usable surveys for AUC time series creation> However, due to insufficient surveyor comments, the LCD method utilizes **`r total_surveys.0.2`** surveys, while the Full Survey Extent Method utilizes **`r total_surveys.1`** surveys. 
++ The LCD Method should, in theory, maximize the number of usable surveys for AUC time series creation. However, due to insufficient surveyor comments, the LCD method utilizes **`r total_surveys.0.2`** surveys, while the Full Survey Extent Method utilizes **`r total_surveys.1`** surveys. 
 
 #### Discrepancies 
 
 ##### 2007 - 2009
-Generally, the Total Extent Method more accuratey represents escapement for this period
+Generally, the Total Extent Method more accurately represents escapement for this period
+
  + 2007 - the LCD Method selects 0 surveys from 2007, while the Full Survey Extent Method selects 7 surveys, providing a more accurate representation of escapement
  + 2008 - The LCD method selects 3 surveys from 2008, while the Full Survey Extent Method selects only 1 survey. The single survey selected by this method occurs on Julian Day       249, while peak spawn for 2008 occurred on approximately day 265. As such, this survey does not accurately reflect escapement for 2008.  
  + 2009 - Although both methods select 4 surveys from 2009, the Full Survey Extent Method includes a survey from Julian Day 253, while the LCD Method excludes this survey due to     limited delineating information found in surveyor comments. Relative to other years, 2009 displayed an early peak spawn at approximately Julian Day 253. Therefore, the Full       Survey Extent Method more accurately represents AUC escapement for 2009.
@@ -430,7 +431,7 @@ Generally, the Total Extent Method more accuratey represents escapement for this
 Generally, the LCD Method more accurately represents escapement for this year
 
 + The Full Survey Extent Method selects only 1 survey for 2015, while the LCD Method selects 2. 
-+ The Full Survey Extent Method excludes the survey conducted on Julian Day 262, the approximate date of peak spawn in 2015, as this survey did not cover the full survey extent.
++ The Full Survey Extent Method excludes the survey conducted on Julian Day 262 (the approximate date of peak spawn in 2015) as this survey did not cover the full survey extent.
 
 ```{r fig.cap = " Figure 4: Nanika River Escapement Time Series, Comparison of Methods (2004-2024)", echo=FALSE, eval=TRUE, message=FALSE, warning=FALSE}
 
@@ -480,8 +481,8 @@ nanika_comparison
 
 ### Reccomendation 
 
-For the Nanika River, the Full Survey Extent Method creates a time series of escapement which minimizes concerns and maximizes the number of usable surveys. Compared to the LCD method, this method utilizes a larger survey sample size across a larger survey date range, and as a result generally presents a more representative visualization of escapement over time from the Nanika River.
+For the Nanika River, the Full Survey Extent Method creates a time series of escapement which minimizes concerns and maximizes the number of usable surveys. Compared to the LCD method, this method utilizes a larger survey sample size across a larger survey date range, and as a result generally presents a more representative visualization of escapement over time in the Nanika River.
 
-The LCD Method presents an alternative escapement time series with a similar trend (see comparison plot). However, the lack of Reach-specific spawner observations creates a smaller usable survey sample size, with many years using either 0 or 1 survey to calculate escapement, which is insufficient. Additionally, given that this method excludes observations from a portion of the river, results do not represent accurate escapement estimates, but a time series **trend** which should not be used to inform management decisions. For rivers with more consistent reach-specific spawner observations, this method could maximize the usable number of surveys.
+The LCD Method presents an alternative escapement time series with a similar trend (see comparison plot). However, the lack of reach-specific spawner observations creates a smaller usable survey sample size, with many years selecting either 0 or 1 surveys to estimate escapement, which introduces additional uncertainty. Additionally, given that this method excludes observations from a large proportion of the river, results do not represent accurate escapement estimates, but rather a time series **trend** which should not be used to inform management decisions. For rivers with more consistent reach-specific spawner observations, this method could maximize the usable number of surveys.
 
-Although both methods provide accurate time series based on their inputs and limitations, they both utilize only a subset of the full SIL data for the date range of interest, and therefore neither method can provide results that are entirely accurate on their own. Justification on method selection should be carefully considered when applying these methods to alternative systems, and clear communication of input data and sample size is critical to avoid misinterpretation of results.
+Although both methods provide accurate time series based on their inputs and limitations, they both utilize only a subset of the full SIL data for the date range of interest, and therefore neither method can provide results that are entirely accurate on their own. Justification of method selection should be carefully considered when applying these methods to alternative systems, and clear communication of limitations, input data, and sample size is critical to avoid misinterpretation of results.
