@@ -1,0 +1,103 @@
+#Generate escapement time series plot 
+# Load required libraries
+library(readxl)
+library(tidyverse)
+library(ggplot2)
+library(zoo) # For interpolation
+
+# Process data for proportion = 0.2
+auc.2004 <- test.auc.allinone(day = c(248, 262, 274), count = c(428.6, 81.4, 2011.4), res.time = 14.25)
+auc.2005 <- test.auc.allinone(day = c(287), count = c(210), res.time = 14.25)
+auc.2006 <- test.auc.allinone(day = c(251, 258, 263, 279), count = c(1083.3, 1366.7, 4333.3, 1636.7), res.time = 14.25)
+
+auc.2008 <- test.auc.allinone(day = c(264, 273, 287), count = c(4071.4, 1857.1, 217.1), res.time = 14.25)
+auc.2009 <- test.auc.allinone(day = c(259, 266, 273, 280), count = c(3285.7, 6428.6, 2571.4, 94.3), res.time = 14.25)
+auc.2010 <- test.auc.allinone(day = c(252, 257, 270), count = c(1400, 2425, 1333.3), res.time = 14.25)
+auc.2012 <- test.auc.allinone(day = c(249, 264, 278), count = c(271.4, 6471.4, 357.1), res.time = 14.25)
+auc.2013 <- test.auc.allinone(day = c(256, 263, 270), count = c(6373.3, 3562.7, 1142.7), res.time = 14.25)
+auc.2014 <- test.auc.allinone(day = c(265, 270), count = c(7176.5, 4505.9), res.time = 14.25)
+auc.2015 <- test.auc.allinone(day = c(262, 273), count = c(11506.8, 6301.4), res.time = 14.25)
+auc.2016 <- test.auc.allinone(day = c(263, 273), count = c(8285.7, 2314.3), res.time = 14.25)
+#auc.2017 <- test.auc.allinone(day = c(273), count = c(550), res.time = 14.25)
+auc.2018 <- test.auc.allinone(day = c(264, 270), count = c(4500, 6612.5), res.time = 14.25)
+auc.2019 <- test.auc.allinone(day = c(253, 265, 276, 290), count = c(8052.6, 11873.7, 6600, 200), res.time = 14.25)
+auc.2020 <- test.auc.allinone(day = c(262, 274), count = c(4946.7, 1640), res.time = 14.25)
+
+auc.2024 <- test.auc.allinone(day = c(240, 252, 260), count = c(1125, 2823.5, 2894.7), res.time = 14.25)
+
+# Extract the AUC values from the dataframes for each year
+auc_values_0.2 <- c(
+  "2004" = sum(auc.2004$auc),
+  "2005" = sum(auc.2005$auc),
+  "2006" = sum(auc.2006$auc),
+ # "2007" = sum(auc.2007$auc),
+  "2008" = sum(auc.2008$auc),
+  "2009" = sum(auc.2009$auc),
+ #"2011" = sum(auc.2011$auc),
+  "2012" = sum(auc.2012$auc),
+  "2013" = sum(auc.2013$auc),
+  "2014" = sum(auc.2014$auc),
+  "2015" = sum(auc.2015$auc),
+  "2016" = sum(auc.2016$auc),
+  #"2017" = sum(auc.2017$auc),
+  "2018" = sum(auc.2018$auc),
+  "2019" = sum(auc.2019$auc),
+  "2020" = sum(auc.2020$auc),
+  #"2021" = sum(auc.2021$auc),
+  #"2022" = sum(auc.2022$auc),
+ #"2023" = sum(auc.2023$auc),
+  "2024" = sum(auc.2024$auc)
+)
+
+# Convert to dataframe for easy plotting
+auc_df_0.2 <- data.frame(
+  Year = as.numeric(names(auc_values_0.2)),
+  AUC = as.numeric(auc_values_0.2)
+)
+
+# Centralize and standardize the AUC values
+auc_df_0.2 <- auc_df_0.2 %>%
+  mutate(
+    AUC_Centralized = AUC - mean(AUC),  # Subtract mean for centralization
+    AUC_Standardized = (AUC - mean(AUC)) / sd(AUC)  # Standardize (subtract mean, divide by SD)
+  )
+
+# Create the time series plot with the standardized AUC values and smoothed trend line
+ggplot(auc_df_0.2, aes(x = Year, y = AUC_Standardized)) +
+  geom_line() +  # Add line for the standardized AUC values
+  geom_point(size = 3, color = "blue") +  # Add points to emphasize each year's standardized AUC value
+  geom_smooth(method = "loess", color = "red", size = 1.5, se = FALSE) +  # Add smoothed trend line
+  scale_x_continuous(breaks = seq(min(auc_df_0.2$Year), max(auc_df_0.2$Year), by = 1)) +  # Show every year on the x-axis
+  theme_minimal() +  # Use a minimal theme for the plot
+  labs(title = "Standardized Reach 2 AUC Escapement Time Series, Nanika River (2004-2024)",  # Title of the plot
+       x = "Year",  # X-axis label
+       y = "Standardized AUC Escapement")  # Y-axis label
+
+
+#Generate tables showing number of surveys used per year
+library(dplyr)
+library(kableExtra)
+
+# Create a full sequence of years from the dataset range
+all_years <- tibble(Inspection.Year = seq(min(nanika.sils$Inspection.Year, na.rm = TRUE), 
+                                          max(nanika.sils$Inspection.Year, na.rm = TRUE), 
+                                          by = 1))
+
+# Count number of surveys per year
+survey_counts.0.2 <- nanika.sils %>% 
+  filter(StreamId %in% 428, !is.na(reach2_sk_spawners)) %>% 
+  filter(TargetSockeye == TRUE, Inspection.Year != 2017) %>%  # Exclude 2017
+  group_by(Inspection.Year) %>% 
+  summarize(n_surveys = n()) %>% 
+  ungroup()
+
+# Merge with full year sequence to include years with zero surveys
+survey_counts.0.2.complete <- all_years %>%
+  left_join(survey_counts.0.2, by = "Inspection.Year") %>%
+  mutate(n_surveys = replace_na(n_surveys, 0))  # Replace missing values with 0
+
+# Calculate total surveys
+total_surveys.0.2 <- sum(survey_counts.0.2.complete$n_surveys)
+
+# Print table
+kable(survey_counts.0.2.complete, col.names = c("Year", "Number of Surveys"), caption = "Table 2: Number of utlized surveys per year, LCD Method, Nanika River (2004-2024)")
