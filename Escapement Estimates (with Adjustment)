@@ -18,11 +18,8 @@ mean_proportion <- mean(proportion, na.rm = TRUE)
 # Step 2: Identify the years to adjust
 years_to_adjust <- c(2008, 2015)
 
-# Step 3: Adjust the values for both years using the subset values
+# Step 3: Adjust the values for both years using the subset proportion
 adjusted_values <- auc_LCD[years %in% years_to_adjust] / mean_proportion
-
-# Step 4: Replace the NA values in auc_fullextent
-auc_fullextent[years %in% years_to_adjust] <- adjusted_values
 
 # Create a data frame for adjusted values
 adjusted_df <- data.frame(
@@ -34,7 +31,18 @@ adjusted_df <- data.frame(
 kable(adjusted_df, caption = "Table 3: Adjusted Escapement Estimates")
 ```
 
-### Then, we input adjusted values into test.auc.allinone AUC escapement estimator function to generate a cohesive series of escapement estimates for the Nanika River 
+##### <u>Replace unknown/incorrect escapement values with newly created adjusted escapement values</u> 
+Re-run the original test.auc.allinone function using new escamepement values for the Full Survey Extent Method
+
++ test.auc.allinone function is defined 
++ Raw data are imported 
++ test.auc.allinone function is run once for each relevant survey year
+  + Where day = julian.day, count = fullextent_sk_spawners_est_total, residence time = 14.25
++ Adjusted escapement estimates are inputted into relevant survey years within auc_values_1
++ auc_values_1 is converted to a dataframe
++ **Optional**: Results are saved as a .csv file 
++ Resulting escapement estimates are visualized in a table
+  
 
 ```{r fig.cap = "Figure 5: Nanika River Escapement Time Series, Full Survey Extent Method (2004-2024), Adjusted", echo=FALSE, eval=TRUE, message=FALSE, warning=FALSE}
 
@@ -120,7 +128,7 @@ auc_df_1_adjusted <- data.frame(
 write.csv(auc_df_1_adjusted, "Adjusted Yearly Escapement Estimates, Full Survey Extent Method.csv", row.names = FALSE)
 
 # Print results in a table
-kable(auc_df_1_adjusted, caption = "Table 4: AUC Escapement Estimates, Full Survey Extent Method (2004-2024, Adjusted)")
+kable(auc_df_1_adjusted, caption = "Table 4: AUC Escapement Estimates, Full Survey Extent Method (2004-2024) Adjusted)")
 
 # Create the time series plot with the standardized AUC values and smoothed trend line
 ggplot(auc_df_1_adjusted, aes(x = Year, y = auc_values_1)) +
