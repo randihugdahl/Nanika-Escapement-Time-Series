@@ -1,0 +1,136 @@
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+
+#To create accurate escapement estimates, we will use the Full Survey Extent Method, with some missing data years adjusted based on the proportional relationship between the LCD Method and the Full Survey Extent Method results.
+# First we find adjusted auc values for chosen years
+# Define years and AUC estimates
+years <- 2004:2024
+auc_fullextent <- c(458.8, 519.2, 4259.2, 10489.5, NA, 11450.8, NA, 5089.0, 7135.3, 7072.8, 7038.6, 
+                    NA, 8444.6, NA, 10696.6, 27921.9, 7356.6, 8225.3, 4095.1, 6768.4, 5827.2)  
+
+auc_LCD <- c(2228.6, 210, 6052.7, NA, 4940.8, 6095.8, NA, NA, 6919.7, 6915.3, 6766.6, 
+             15570.9, 8068.0, NA, 7663.8, 22889.9, 5589.9, NA, NA, NA, 5028.7)  
+
+# Step 1: Calculate the average proportion of subset (auc_LCD) to full river(auc_fullextent) (excluding NA values)
+valid_indices <- !is.na(auc_fullextent) & !is.na(auc_LCD)
+proportion <- auc_LCD[valid_indices] / auc_fullextent[valid_indices]
+mean_proportion <- mean(proportion, na.rm = TRUE)
+
+# Step 2: Identify the years to adjust
+years_to_adjust <- c(2008, 2015)
+
+# Step 3: Adjust the values for both years using the subset values
+adjusted_values <- auc_LCD[years %in% years_to_adjust] / mean_proportion
+
+# Step 4: Replace the NA values in auc_fullextent
+auc_fullextent[years %in% years_to_adjust] <- adjusted_values
+
+# Create a data frame for adjusted values
+adjusted_df <- data.frame(
+  Year = years_to_adjust,
+  Adjusted.Escapement = adjusted_values
+)
+
+# Print the table
+kable(adjusted_df, caption = "Table 3: Adjusted Escapement Estimates")
+```
+
+### Then, we input adjusted values into test.auc.allinone AUC escapement estimator function to generate a cohesive series of escapement estimates for the Nanika River 
+
+```{r fig.cap = "Figure 5: Nanika River Escapement Time Series, Full Survey Extent Method (2004-2024), Adjusted", echo=FALSE, eval=TRUE, message=FALSE, warning=FALSE}
+
+test.auc.allinone <- function(day, count, res.time){
+  data.frame(day, count) %>% 
+    add_row(day = 0, count = 0) %>% 
+    add_row(day = 364, count = 0) %>% 
+    arrange(day) %>% 
+    mutate(survey = seq(1, length(day), by = 1)) %>%  
+    mutate(day.x1 = lead(day, 1) - res.time) %>% 
+    mutate(day.x2 = lead(day, 1) - lead(count, 1) / (abs(lead(count, 2) - lead(count, 1)) / (lead(day, 2) - lead(day, 1)))) %>% 
+    mutate(day = ifelse(day %in% 0, pmax(day.x1, day.x2, na.rm = TRUE), day)) %>% 
+    mutate(day.x3 = lag(day, 1) + res.time) %>% 
+    mutate(day.x4 = lag(day, 1) - lag(count, 1) / (abs(lag(count, 2) - lag(count, 1)) / (lag(day, 2) - lag(day, 1)))) %>% 
+    mutate(day = ifelse(day %in% last(day), pmin(day.x3, day.x4, na.rm = TRUE), day)) %>% 
+    select(-c(day.x1, day.x2, day.x3, day.x4)) %>% 
+    mutate(day_1 = lag(day)) %>% 
+    mutate(count_1 = lag(count)) %>%
+    mutate(int = day - day_1) %>% 
+    mutate(fish_days = c(NA, diff(day) * zoo::rollmean(count, 2))) %>% 
+    summarize(fish_days = sum(na.omit(fish_days))) %>% 
+    mutate(auc = fish_days / res.time) %>% 
+    select(auc)
+}
+
+# Import and process data for proportion = 1
+nanika.sils <- read_xlsx("RH_SILs.toreview-nanikaSKCH2004-2024.xlsx", na = "NA")
+auc.2004 <- test.auc.allinone(day = c(259, 272), count = c(2.9, 500), res.time = 14.25)
+auc.2005 <- test.auc.allinone(day = c(248, 266), count = c(0, 458.8), res.time = 14.25)
+auc.2006 <- test.auc.allinone(day = c(249, 263, 266, 285), count = c(733.3, 4333.3, 1400, 205), res.time = 14.25)
+auc.2007 <- test.auc.allinone(day = c(249, 258, 261, 264, 268, 275, 283), count = c(0, 8469.2, 5907.7, 7000, 4307.7, 3900, 713.8), res.time = 14.25)
+#auc.2008 <- test.auc.allinone(day = c(219), count = c(1942.9), res.time = 14.25)
+auc.2009 <- test.auc.allinone(day = c(253, 259, 266, 280), count = c(8371.4, 3578.6, 6680, 111.4), res.time = 14.25)
+auc.2011 <- test.auc.allinone(day = c(255, 264, 265), count = c(3292.3, 4115.4, 3576.9), res.time = 14.25)
+auc.2012 <- test.auc.allinone(day = c(249, 264, 278), count = c(271.4, 6671.4, 380), res.time = 14.25)
+auc.2013 <- test.auc.allinone(day = c(256, 263, 270), count = c(6470.7, 3648.0, 1230.7), res.time = 14.25)
+auc.2014 <- test.auc.allinone(day = c(265, 270), count = c(7388.2, 4667.1), res.time = 14.25)
+auc.2015 <- test.auc.allinone(day = c(273), count = c(6808.2), res.time = 14.25)
+auc.2016 <- test.auc.allinone(day = c(263, 273), count = c(8828.6, 2351.4), res.time = 14.25)
+#auc.2017 <- test.auc.allinone(day = c(273), count = c(725), res.time = 14.25)
+auc.2018 <- test.auc.allinone(day = c(264, 270, 285), count = c(6225, 7987.5, 675), res.time = 14.25)
+auc.2019 <- test.auc.allinone(day = c(253, 265, 276, 290), count = c(10578.9, 13957.9, 7752.6, 224.2), res.time = 14.25)
+auc.2020 <- test.auc.allinone(day = c(262, 274), count = c(6973.3, 1682.7), res.time = 14.25)
+auc.2021 <- test.auc.allinone(day = c(251, 267), count = c(7228.6, 866.7), res.time = 14.25)
+auc.2022 <- test.auc.allinone(day = c(238, 257, 271), count = c(5.7, 2311.1, 1427.8), res.time = 14.25)
+auc.2023 <- test.auc.allinone(day = c(240, 252, 264, 275), count = c(10.5, 2631.6, 5003.2, 1045.7), res.time = 14.25)
+auc.2024 <- test.auc.allinone(day = c(240, 252, 260), count = c(1125, 3047.1, 3763.2), res.time = 14.25)
+
+
+# Extract the AUC values from the dataframes for each year
+# 2017 removed because only 1 survey with poor counting conditions 
+# 2008 removed because only 1 survey, missing peak spawn, significantly underestimates escapement
+auc_values_1 <- c(
+  "2004" = sum(auc.2004$auc),
+  "2005" = sum(auc.2005$auc),
+  "2006" = sum(auc.2006$auc),
+  "2007" = sum(auc.2007$auc),
+  "2008" = (4163.974),
+  "2009" = sum(auc.2009$auc),
+  "2011" = sum(auc.2011$auc),
+  "2012" = sum(auc.2012$auc),
+  "2013" = sum(auc.2013$auc),
+  "2014" = sum(auc.2014$auc),
+  "2015" = (13122.738),
+  "2016" = sum(auc.2016$auc),
+#  "2017" = sum(auc.2017$auc),
+  "2018" = sum(auc.2018$auc),
+  "2019" = sum(auc.2019$auc),
+  "2020" = sum(auc.2020$auc),
+  "2021" = sum(auc.2021$auc),
+  "2022" = sum(auc.2022$auc),
+  "2023" = sum(auc.2023$auc),
+  "2024" = sum(auc.2024$auc)
+)
+
+# Convert to dataframe for easy plotting
+auc_df_1_adjusted <- data.frame(
+  Year = as.numeric(names(auc_values_1)),
+  AUC = as.numeric(auc_values_1)
+)
+
+#Optional: write results as a .csv file
+write.csv(auc_df_1_adjusted, "Adjusted Yearly Escapement Estimates, Full Survey Extent Method.csv", row.names = FALSE)
+
+# Print results in a table
+kable(auc_df_1_adjusted, caption = "Table 4: AUC Escapement Estimates, Full Survey Extent Method (2004-2024, Adjusted)")
+
+# Create the time series plot with the standardized AUC values and smoothed trend line
+ggplot(auc_df_1_adjusted, aes(x = Year, y = auc_values_1)) +
+  geom_line() +  # Add line for the standardized AUC values
+  geom_point(size = 3, color = "blue") +  # Add points to emphasize each year's standardized AUC value
+  geom_smooth(method = "loess", color = "red", size = 1.5, se = FALSE) +  # Add smoothed trend line
+  scale_x_continuous(breaks = seq(min(auc_df_1$Year), max(auc_df_1$Year), by = 1)) +  # Show every year on the x-axis
+  theme_minimal() +  # Use a minimal theme for the plot
+  labs(title = "AUC Escapement Estimates, Full Survey Extent Method, Nanika River (2004-2024, Adjusted",  # Title of the plot
+       x = "Year",  # X-axis label
+       y = "AUC Escapement")  # Y-axis label
+
+```
