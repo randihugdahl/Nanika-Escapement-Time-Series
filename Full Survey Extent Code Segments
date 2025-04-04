@@ -44,7 +44,7 @@ auc.2014 <- test.auc.allinone(day = c(265, 270), count = c(7388.2, 4667.1), res.
 auc.2015 <- test.auc.allinone(day = c(273), count = c(6808.2), res.time = 14.25)
 auc.2016 <- test.auc.allinone(day = c(263, 273), count = c(8828.6, 2351.4), res.time = 14.25)
 #auc.2017 <- test.auc.allinone(day = c(273), count = c(725), res.time = 14.25)
-auc.2018 <- test.auc.allinone(day = c(264, 270, 285), count = c(6225, 7987.5, 675), res.time = 14.25)
+auc.2018 <- test.auc.allinone(day = c(264, 270), count = c(6225, 7987.5), res.time = 14.25)
 auc.2019 <- test.auc.allinone(day = c(253, 265, 276, 290), count = c(10578.9, 13957.9, 7752.6, 224.2), res.time = 14.25)
 auc.2020 <- test.auc.allinone(day = c(262, 274), count = c(6973.3, 1682.7), res.time = 14.25)
 auc.2021 <- test.auc.allinone(day = c(251, 267), count = c(7228.6, 866.7), res.time = 14.25)
