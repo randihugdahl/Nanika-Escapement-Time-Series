@@ -1,4 +1,5 @@
-#Generating escapement time series plot
+```{r fig.cap = "Figure 2: Nanika River Escapement Time Series, Full Survey Extent Method (2004-2024)", echo=FALSE, eval=TRUE, message=FALSE, warning=FALSE}
+
 # Load required libraries
 library(readxl)
 library(tidyverse)
@@ -35,6 +36,7 @@ auc.2006 <- test.auc.allinone(day = c(249, 263, 266, 285), count = c(733.3, 4333
 auc.2007 <- test.auc.allinone(day = c(249, 258, 261, 264, 268, 275, 283), count = c(0, 8469.2, 5907.7, 7000, 4307.7, 3900, 713.8), res.time = 14.25)
 #auc.2008 <- test.auc.allinone(day = c(219), count = c(1942.9), res.time = 14.25)
 auc.2009 <- test.auc.allinone(day = c(253, 259, 266, 280), count = c(8371.4, 3578.6, 6680, 111.4), res.time = 14.25)
+#no surveys in 2010 where proportion.surveyed = 1
 auc.2011 <- test.auc.allinone(day = c(255, 264, 265), count = c(3292.3, 4115.4, 3576.9), res.time = 14.25)
 auc.2012 <- test.auc.allinone(day = c(249, 264, 278), count = c(271.4, 6671.4, 380), res.time = 14.25)
 auc.2013 <- test.auc.allinone(day = c(256, 263, 270), count = c(6470.7, 3648.0, 1230.7), res.time = 14.25)
@@ -61,6 +63,7 @@ auc_values_1 <- c(
   "2007" = sum(auc.2007$auc),
  # "2008" = sum(auc.2008$auc),
   "2009" = sum(auc.2009$auc),
+  #"2010" = sum(auc.2010$auc),
   "2011" = sum(auc.2011$auc),
   "2012" = sum(auc.2012$auc),
   "2013" = sum(auc.2013$auc),
@@ -83,15 +86,19 @@ auc_df_1 <- data.frame(
   AUC = as.numeric(auc_values_1)
 )
 
+#Optional: write results as a .csv file
+write.csv(auc_df_1, "Yearly Escapement Estimates, Full Survey Extent Method.csv", row.names = FALSE)
+
+
 # Centralize and standardize the AUC values
-auc_df_1 <- auc_df_1 %>%
+auc_df_1_timeseries <- auc_df_1 %>%
   mutate(
     AUC_Centralized = AUC - mean(AUC),  # Subtract mean for centralization
     AUC_Standardized = (AUC - mean(AUC)) / sd(AUC)  # Standardize (subtract mean, divide by SD)
   )
 
 # Create the time series plot with the standardized AUC values and smoothed trend line
-ggplot(auc_df_1, aes(x = Year, y = AUC_Standardized)) +
+ggplot(auc_df_1_timeseries, aes(x = Year, y = AUC_Standardized)) +
   geom_line() +  # Add line for the standardized AUC values
   geom_point(size = 3, color = "blue") +  # Add points to emphasize each year's standardized AUC value
   geom_smooth(method = "loess", color = "red", size = 1.5, se = FALSE) +  # Add smoothed trend line
@@ -100,11 +107,9 @@ ggplot(auc_df_1, aes(x = Year, y = AUC_Standardized)) +
   labs(title = "Standardized AUC Escapement Time Series, Nanika River (2004-2024)",  # Title of the plot
        x = "Year",  # X-axis label
        y = "Standardized AUC Escapement")  # Y-axis label
+```
 
-
-
-
-#Generating tables with number of surveys used per year
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
 library(dplyr)
 library(kableExtra)
 
