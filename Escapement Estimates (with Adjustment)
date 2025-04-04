@@ -1,50 +1,4 @@
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
-
-#To create accurate escapement estimates, we will use the Full Survey Extent Method, with some missing data years adjusted based on the proportional relationship between the LCD Method and the Full Survey Extent Method results.
-# First we find adjusted auc values for chosen years
-# Define years and AUC estimates
-years <- 2004:2024
-auc_fullextent <- c(458.8, 519.2, 4259.2, 10489.5, NA, 11450.8, NA, 5089.0, 7135.3, 7072.8, 7038.6, 
-                    NA, 8444.6, NA, 10696.6, 27921.9, 7356.6, 8225.3, 4095.1, 6768.4, 5827.2)  
-
-auc_LCD <- c(2228.6, 210, 6052.7, NA, 4940.8, 6095.8, NA, NA, 6919.7, 6915.3, 6766.6, 
-             15570.9, 8068.0, NA, 7663.8, 22889.9, 5589.9, NA, NA, NA, 5028.7)  
-
-# Step 1: Calculate the average proportion of subset (auc_LCD) to full river(auc_fullextent) (excluding NA values)
-valid_indices <- !is.na(auc_fullextent) & !is.na(auc_LCD)
-proportion <- auc_LCD[valid_indices] / auc_fullextent[valid_indices]
-mean_proportion <- mean(proportion, na.rm = TRUE)
-
-# Step 2: Identify the years to adjust
-years_to_adjust <- c(2008, 2015)
-
-# Step 3: Adjust the values for both years using the subset proportion
-adjusted_values <- auc_LCD[years %in% years_to_adjust] / mean_proportion
-
-# Create a data frame for adjusted values
-adjusted_df <- data.frame(
-  Year = years_to_adjust,
-  Adjusted.Escapement = adjusted_values
-)
-
-# Print the table
-kable(adjusted_df, caption = "Table 3: Adjusted Escapement Estimates")
-```
-
-##### <u>Replace unknown/incorrect escapement values with newly created adjusted escapement values</u> 
-Re-run the original test.auc.allinone function using new escamepement values for the Full Survey Extent Method
-
-+ test.auc.allinone function is defined 
-+ Raw data are imported 
-+ test.auc.allinone function is run once for each relevant survey year
-  + Where day = julian.day, count = fullextent_sk_spawners_est_total, residence time = 14.25
-+ Adjusted escapement estimates are inputted into relevant survey years within auc_values_1
-+ auc_values_1 is converted to a dataframe
-+ **Optional**: Results are saved as a .csv file 
-+ Resulting escapement estimates are visualized in a table
-  
-
-```{r fig.cap = "Figure 5: Nanika River Escapement Time Series, Full Survey Extent Method (2004-2024), Adjusted", echo=FALSE, eval=TRUE, message=FALSE, warning=FALSE}
+```{r fig.cap = "Figure 5: Nanika River Escapement Estimates, Full Survey Extent Method (2004-2024), Adjusted", echo=FALSE, eval=TRUE, message=FALSE, warning=FALSE}
 
 test.auc.allinone <- function(day, count, res.time){
   data.frame(day, count) %>% 
@@ -102,6 +56,7 @@ auc_values_1 <- c(
   "2007" = sum(auc.2007$auc),
   "2008" = (4163.974),
   "2009" = sum(auc.2009$auc),
+  "2010" = (2854.894),
   "2011" = sum(auc.2011$auc),
   "2012" = sum(auc.2012$auc),
   "2013" = sum(auc.2013$auc),
@@ -141,4 +96,27 @@ ggplot(auc_df_1_adjusted, aes(x = Year, y = auc_values_1)) +
        x = "Year",  # X-axis label
        y = "AUC Escapement")  # Y-axis label
 
+```
+
+#### **Optional:** Standarize adjusted escapement for time series visualuzation
+
+```{r fig.cap = "Figure 6: Nanika River Escapement Time Series, Full Survey Extent Method (2004-2024), Adjusted", echo=FALSE, eval=TRUE, message=FALSE, warning=FALSE}
+
+# Centralize and standardize the AUC values
+auc_df_1_timeseries_adjusted <- auc_df_1_adjusted %>%
+  mutate(
+    AUC_Centralized = AUC - mean(AUC),  # Subtract mean for centralization
+    AUC_Standardized = (AUC - mean(AUC)) / sd(AUC)  # Standardize (subtract mean, divide by SD)
+  )
+
+# Create the time series plot with the standardized AUC values and smoothed trend line
+ggplot(auc_df_1_timeseries_adjusted, aes(x = Year, y = AUC_Standardized)) +
+  geom_line() +  # Add line for the standardized AUC values
+  geom_point(size = 3, color = "blue") +  # Add points to emphasize each year's standardized AUC value
+  geom_smooth(method = "loess", color = "red", size = 1.5, se = FALSE) +  # Add smoothed trend line
+  scale_x_continuous(breaks = seq(min(auc_df_0.2$Year), max(auc_df_0.2$Year), by = 1)) +  # Show every year on the x-axis
+  theme_minimal() +  # Use a minimal theme for the plot
+  labs(title = "Standardized Escapement Time Series, Nanika River (2004-2024), Adjusted",  # Title of the plot
+       x = "Year",  # X-axis label
+       y = "Standardized AUC Escapement")  # Y-axis label
 ```
